@@ -173,20 +173,20 @@ Disassembly of section .text:
     121c:	c3                   	ret    
 
 000000000000121d <trampoline>:
-    121d:	f3 0f 1e fa          	endbr64 
-    1221:	55                   	push   %rbp
-    1222:	48 89 e5             	mov    %rsp,%rbp
-    1225:	b8 00 00 00 00       	mov    $0x0,%eax
-    122a:	e8 7a ff ff ff       	call   11a9 <print_time>
-    122f:	5d                   	pop    %rbp
-    1230:	c7 85 a0 63 ff ff 00 	movl   $0x0,-0x9c60(%rbp)
-    1237:	00 00 00 
+    121d:	c7 85 a0 63 ff ff 00 	movl   $0x0,-0x9c60(%rbp)
+    1224:	00 00 00 
+    1227:	eb 58                	jmp    1281 <main+0x41>
+    1229:	c7 85 a0 63 ff ff 00 	movl   $0x0,-0x9c60(%rbp)
+    1230:	00 00 00 
+    1233:	e9 c5 00 00 00       	jmp    12fd <main+0xbd>
+    1238:	90                   	nop
+    1239:	90                   	nop
     123a:	90                   	nop
     123b:	90                   	nop
     123c:	90                   	nop
     123d:	90                   	nop
     123e:	90                   	nop
-    123f:	c3                   	ret    
+    123f:	90                   	nop
 
 0000000000001240 <main>:
     1240:	f3 0f 1e fa          	endbr64 
@@ -203,9 +203,8 @@ Disassembly of section .text:
     126f:	00 00 
     1271:	48 89 45 f8          	mov    %rax,-0x8(%rbp)
     1275:	31 c0                	xor    %eax,%eax
-    1277:	e8 a1 ff ff ff       	call   121d <trampoline>
-    127c:	90                   	nop
-    127d:	90                   	nop
+    1277:	e8 2d ff ff ff       	call   11a9 <print_time>
+    127c:	eb 9f                	jmp    121d <trampoline>
     127e:	90                   	nop
     127f:	90                   	nop
     1280:	90                   	nop
@@ -235,8 +234,8 @@ Disassembly of section .text:
     12e3:	83 85 a0 63 ff ff 01 	addl   $0x1,-0x9c60(%rbp)
     12ea:	83 bd a0 63 ff ff 63 	cmpl   $0x63,-0x9c60(%rbp)
     12f1:	7e 90                	jle    1283 <main+0x43>
-    12f3:	c7 85 a8 63 ff ff 00 	movl   $0x0,-0x9c58(%rbp)
-    12fa:	00 00 00 
+    12f3:	e8 b1 fe ff ff       	call   11a9 <print_time>
+    12f8:	e9 2c ff ff ff       	jmp    1229 <trampoline+0xc>
     12fd:	eb 78                	jmp    1377 <main+0x137>
     12ff:	c7 85 ac 63 ff ff 00 	movl   $0x0,-0x9c54(%rbp)
     1306:	00 00 00 
