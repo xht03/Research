@@ -10,17 +10,18 @@
 
 #define MAX_BYTES 16    // 一条指令最多包含的字节数
 
-int text_offset = 0;
-int text_size = 0;
-
-
 struct Instruction {
     int offset;
     int length;
-    unsigned char *bytes;
-    char *mnemonic;
-    char *op_str;
-};
+    unsigned char bytes[MAX_BYTES];
+} ins[1000];
+
+int text_offset = 0;    // .text节的偏移
+int text_size = 0;      // .text节的大小
+int count = 0;          // 指令计数
+
+
+
 
 void reader(int argc, char **argv)
 {
@@ -121,9 +122,7 @@ void diser(int argc, char **argv)
     info.arch = bfd_arch_i386;                  // 设置架构为i386
     info.mach = bfd_mach_x86_64;                // 设置机器类型为x86-64
     info.endian = BFD_ENDIAN_LITTLE;            // 设置字节序为小端
-    info.fprintf_func = (fprintf_ftype) fprintf;// 设置打印函数
-    //info.print_address_func = print_insn;       // 设置打印地址函数
-    info.buffer = code + (text_offset - start);
+    info.buffer = code;
     info.buffer_length = length;
 
 
@@ -143,16 +142,19 @@ void diser(int argc, char **argv)
     disassemble = disassembler (info.arch, info.mach, info.endian, &abfd);
 
 
-    bfd_vma pc = 0;
-    int i = 0;
-    while (pc < text_size) {
-        //for(int i = 0; i < disassemble (pc, &info); i++)
-        //{
-        //    printf("%02x ", code[pc + i]);
-        //}
-        printf("PC = 0x%lx, Len = %x\n", pc, disassemble (pc, &info));
-        pc += disassemble (pc, &info);
-        i++;
+    bfd_vma pc = text_offset - start;
+    while (pc < length) {
+        printf("0x%lx\t", pc + start);
+        ins[count].offset = pc + start;
+        ins[count].length = disassemble (pc, &info);    //调用disassemble函数的同时会打印反汇编代码
+        for(int i = 0; i < ins[count].length; i++)
+        {
+            ins[count].bytes[i] = code[pc + i];
+            printf(" %02x", code[pc + i]);
+        }
+        printf("\n");
+        pc += ins[count].length;
+        count++;
     }
 
 }
