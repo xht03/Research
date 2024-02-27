@@ -1,3 +1,4 @@
+// 测试程序
 #include <stdio.h>
 
 #define ROWS 1000

@@ -1,3 +1,4 @@
+// 只能测程序整体运行时间，无法插桩的尝试
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

@@ -1,4 +1,3 @@
-// 基于libelf和Capstone库的ELF文件读取和反汇编程序
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -6,16 +5,22 @@
 #include <libelf.h>
 #include <gelf.h>
 #include <string.h>
-#include <inttypes.h>
-#include <capstone/capstone.h>
 #include <sys/mman.h>
 #include <dis-asm.h>
-
 
 #define MAX_BYTES 16    // 一条指令最多包含的字节数
 
 int text_offset = 0;
 int text_size = 0;
+
+
+struct Instruction {
+    int offset;
+    int length;
+    unsigned char *bytes;
+    char *mnemonic;
+    char *op_str;
+};
 
 void reader(int argc, char **argv)
 {
@@ -90,11 +95,8 @@ void reader(int argc, char **argv)
 }
 
 
-void disassembler(int argc, char **argv)
+void diser(int argc, char **argv)
 {
-    csh handle;  // Capstone库的句柄
-    cs_insn *insn;  // 存储反汇编结果的数组
-    size_t count;  // 反汇编出的指令数量
 
     int start = (text_offset/0x1000) * 0x1000;
     int length = text_size + (text_offset - start);
@@ -113,44 +115,52 @@ void disassembler(int argc, char **argv)
         exit(1);
     }
 
-    // 打开Capstone库的句柄，设置架构为x86，模式为64位
-     if (cs_open(CS_ARCH_X86, CS_MODE_64, &handle) != CS_ERR_OK)
+    disassemble_info info;
+    // 初始化反汇编信息结构
+    init_disassemble_info (&info, stdout, (fprintf_ftype) fprintf);
+    info.arch = bfd_arch_i386;                  // 设置架构为i386
+    info.mach = bfd_mach_x86_64;                // 设置机器类型为x86-64
+    info.endian = BFD_ENDIAN_LITTLE;            // 设置字节序为小端
+    info.fprintf_func = (fprintf_ftype) fprintf;// 设置打印函数
+    //info.print_address_func = print_insn;       // 设置打印地址函数
+    info.buffer = code + (text_offset - start);
+    info.buffer_length = length;
+
+
+    // 定义反汇编器函数类型
+    disassembler_ftype disassemble;
+        
+    bfd abfd;
+    // 获取一个适合的目标架构
+    // 初始化二进制文件描述符
+    abfd.arch_info = bfd_lookup_arch (info.arch, info.mach);
+    if (bfd_set_default_target("elf64-x86-64") == 0) {
+        printf("bfd_set_default_target failed\n");
         exit(1);
-    
-    // 进行反汇编，结果存储在insn数组中，返回反汇编出的指令数量
-    count = cs_disasm(handle, code + (text_offset - start), sizeof(code) - (text_offset - start), text_offset, 0, &insn);
-
-    if (count > 0) {
-        size_t j;
-        // 遍历每条反汇编出的指令
-        for (j = 0; j < count; j++) {
-            printf("0x%"PRIx64":\t", insn[j].address);
-
-            // 打印原始的机器码
-            for (int k = 0; k < MAX_BYTES; k++) {
-                if (k < insn[j].size) {
-                    printf("%02x ", insn[j].bytes[k]);
-                }
-                else printf("   ");  // 用三个空格填充
-            }
-            
-            printf("%s\t%s\n", insn[j].mnemonic, insn[j].op_str);   // 打印助记符、操作数
-        }
-
-        // 释放存储反汇编结果的数组
-        //cs_free(insn, count);
     }
-    else printf("ERROR: Failed to disassemble given code!\n");
 
-    // 关闭Capstone库的句柄
-    cs_close(&handle);
+    // 创建反汇编器
+    disassemble = disassembler (info.arch, info.mach, info.endian, &abfd);
+
+
+    bfd_vma pc = 0;
+    int i = 0;
+    while (pc < text_size) {
+        //for(int i = 0; i < disassemble (pc, &info); i++)
+        //{
+        //    printf("%02x ", code[pc + i]);
+        //}
+        printf("PC = 0x%lx, Len = %x\n", pc, disassemble (pc, &info));
+        pc += disassemble (pc, &info);
+        i++;
+    }
 
 }
 
 int main(int argc, char **argv) {
 
     reader(argc, argv);
-    disassembler(argc, argv);
+    diser(argc, argv);
 
     return 0;
 }
